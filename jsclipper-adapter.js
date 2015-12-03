@@ -157,5 +157,7 @@ module.exports = {
   diff: diff,
   xor: xor,
 
+  Polygon: Polygon,
+
   ClipperLib: ClipperLib
 }
