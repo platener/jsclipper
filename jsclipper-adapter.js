@@ -128,7 +128,7 @@ Polygon.prototype.getHoles = function() {
   return this._paths.slice(1)
 }
 
-Polygon.clip = function(clipPolygon, clipType) {
+Polygon.prototype.clip = function(clipPolygon, clipType) {
   var solution = clip(this.getPaths(), clipPolygon.getPaths(), clipType)
 
   if (solution) {
