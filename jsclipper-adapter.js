@@ -101,6 +101,46 @@ function xor(subj, clips) {
   return clip(subj, clips, ClipType.XOR)
 }
 
+// == POLYGON METHODS ==
+
+function Polygon(shape, holes) {
+  if (!Array.isArray(shape)) {
+    throw new Error('Given shape should be an array of points [x,y].')
+  }
+
+  holes = holes || []
+  if (!Array.isArray(holes)) {
+    throw new Error('Given holes should be an array of paths.')
+  }
+
+  this._paths = [shape].concat(holes)
+}
+
+Polygon.prototype.getPaths = function() {
+  return this._paths.slice()
+}
+
+Polygon.prototype.getShape = function() {
+  return this._paths.slice(0,1)
+}
+
+Polygon.prototype.getHoles = function() {
+  return this._paths.slice(1)
+}
+
+Polygon.clip = function(clipPolygon, clipType) {
+  var solution = clip(this.getPaths(), clipPolygon.getPaths(), clipType)
+
+  if (solution) {
+    return solution.map(function(shape) {
+      return new Polygon(shape)
+    })
+  }
+
+  // return false when clipping failed
+  return false
+}
+
 // == EXPORTS ==
 module.exports = {
   arrayToObjectNotation: arrayToObjectNotation,
