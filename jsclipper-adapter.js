@@ -142,17 +142,88 @@ Polygon.prototype.getHoles = function() {
   return this._paths.slice(1)
 }
 
-Polygon.clip = function(clipPolygon, clipType) {
-  var solution = clip(this.getPaths(), clipPolygon.getPaths(), clipType)
+/** use clip method on subject polygon with multiple clip polygons **/
+
+Polygon.prototype.clipMultiple = function(clipPolygons, clipType) {
+  var clipPaths = clipPolygons.map(function(polygon) {
+    return polygon.getPaths()
+  })
+  var solution = clip(this.getPaths(), clipPaths, clipType)
 
   if (solution) {
-    return solution.map(function(shape) {
-      return new Polygon(shape)
-    })
+    return Polygon.assignShapesAndHoles(solution)
   }
 
   // return false when clipping failed
   return false
+}
+
+Polygon.prototype.diffMultiple = function (clipPolygons) {
+  return this.clipMultiple(clipPolygons, ClipType.DIFFERENCE)
+}
+
+Polygon.prototype.intersectMultiple = function (clipPolygons) {
+  return this.clipMultiple(clipPolygons, ClipType.INTERSECTION)
+}
+
+Polygon.prototype.unionMultiple = function (clipPolygons) {
+  return this.clipMultiple(clipPolygons, ClipType.UNION)
+}
+
+Polygon.prototype.xorMultiple = function (clipPolygons) {
+  return this.clipMultiple(clipPolygons, ClipType.XOR)
+}
+
+/** use clip method on subject polygon with a single clip polygon **/
+
+Polygon.prototype.diff = function (clipPolygons) {
+  return this.clipMultiple([clipPolygons], ClipType.DIFFERENCE)
+}
+
+Polygon.prototype.intersect = function (clipPolygons) {
+  return this.clipMultiple([clipPolygons], ClipType.INTERSECTION)
+}
+
+Polygon.prototype.union = function (clipPolygons) {
+  return this.clipMultiple([clipPolygons], ClipType.UNION)
+}
+
+Polygon.prototype.xor = function (clipPolygons) {
+  return this.clipMultiple([clipPolygons], ClipType.XOR)
+}
+
+Polygon.assignShapesAndHoles = function(paths) {
+  function separateHolesFromShapes(paths) {
+    var holes = []
+    var shapes = []
+
+    paths.forEach(function(path) {
+      // by JSClipper convention shape boundaries are CCW
+      if (Polygon.isCounterClockwise(path)) {
+        shapes.push(path)
+      } else {
+        holes.push(path)
+      }
+    })
+
+    return {
+      shapes: shapes,
+      holes: holes
+    }
+  }
+
+  function groupHolesForShape(holes) {
+    return function(shape) {
+      var _holes = holes.filter(function(hole) {
+        return Polygon.contains(shape, hole)
+      })
+
+      return new Polygon(shape, _holes)
+    }
+  }
+
+  var p = separateHolesFromShapes(paths)
+  return p.shapes.map(groupHolesForShape(p.holes))
 }
 
 /**
@@ -172,6 +243,7 @@ Polygon.contains = function(outer, inner) {
     return acc && 0 !== ClipperLib.Clipper.PointInPolygon(point, _outer)
   }, true)
 }
+
 // == EXPORTS ==
 module.exports = {
   arrayToObjectNotation: arrayToObjectNotation,
@@ -187,6 +259,8 @@ module.exports = {
   union: union,
   diff: diff,
   xor: xor,
+
+  Polygon: Polygon,
 
   ClipperLib: ClipperLib
 }
