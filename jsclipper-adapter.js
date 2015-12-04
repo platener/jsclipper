@@ -75,7 +75,7 @@ function clip(subj, clips, clipType, scale, fillType) {
   var succeeded = clipper.Execute(clipType, solution, fillType, fillType)
 
   if (succeeded) {
-    ClipperLib.JS.ScaleUpPaths(solution, 1/scale)
+    ClipperLib.JS.ScaleDownPaths(solution, scale)
     return clipperPathsToArray(solution)
   }
 
