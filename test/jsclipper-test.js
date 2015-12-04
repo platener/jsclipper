@@ -69,7 +69,60 @@ describe('Clipping Tests', function() {
     var clips = [clip]
     var solution = Clipper.union(subj, clips)
 
-    expect(solution).to.be.not.false
     expect(solution).to.deep.equal([[[-2, -1], [2, -1], [2, 1], [-2, 1]]])
   })
+
+  it('should diff a hole into subject', function() {
+    var subj = [[[0,0], [2,0], [2,2], [0,2]]]
+    var clip = [[[0.5,0.5], [1.5,0.5], [1.5,1.5], [0.5, 1.5]]]
+    var clips = [clip]
+    var solution = Clipper.diff(subj, clips)
+
+    expect(solution).to.deep.equal([
+      [[2, 2], [0, 2], [0, 0], [2, 0]],
+      [[0.5, 0.5], [0.5, 1.5], [1.5, 1.5], [1.5, 0.5]]
+    ])
+  })
+
+  it('should diff subject into two shapes', function() {
+    var subj = [[ [0,0], [4,0], [4,2], [0,2] ]]
+    var clip = [[ [2,-1], [3,-1], [3,3], [2,3] ]]
+    var clips = [clip]
+    var solution = Clipper.diff(subj, clips)
+
+    expect(solution).to.deep.equal([
+      [[2, 2], [0, 2], [0, 0], [2, 0]],
+      [[4, 2], [3, 2], [3, 0], [4, 0]]
+    ])
+  })
+
+  it('should diff a hole and two shapes into subject', function() {
+    var subj = [
+      [ [0,0], [4,0], [4,2], [0,2] ],
+      [ [0.5,0.5], [1.5,0.5], [1.5,1.5], [0.5, 1.5] ].reverse()
+    ]
+
+    var clip = [[[2,-1], [3,-1], [3,3], [2,3]]]
+    var clips = [clip]
+    var solution = Clipper.diff(subj, clips)
+
+    expect(solution).to.deep.equal([ [ [ 2, 2 ], [ 0, 2 ], [ 0, 0 ], [ 2, 0 ] ],
+  [ [ 4, 2 ], [ 3, 2 ], [ 3, 0 ], [ 4, 0 ] ],
+  [ [ 0.5, 0.5 ], [ 0.5, 1.5 ], [ 1.5, 1.5 ], [ 1.5, 0.5 ] ] ])
+  })
+
+  it('should diff a hole and two shapes into subject using Polygon objects', function() {
+    var subj = new Clipper.Polygon(
+      [[0,0], [4,0], [4,2], [0,2]],
+      [[[0.5,0.5], [1.5,0.5], [1.5,1.5], [0.5, 1.5]]]
+    )
+    var clip = new Clipper.Polygon([[2,-1], [3,-1], [3,3], [2,3]])
+    var solution = subj.diff(clip)
+
+    expect(solution.length).to.equal(2)
+    expect(solution[0]._paths).to.deep.equal([ [ [ 2, 2 ], [ 0, 2 ], [ 0, 0 ], [ 2, 0 ] ],
+  [ [ 0.5, 0.5 ], [ 0.5, 1.5 ], [ 1.5, 1.5 ], [ 1.5, 0.5 ] ] ])
+    expect(solution[1]._paths).to.deep.equal([ [ [ 4, 2 ], [ 3, 2 ], [ 3, 0 ], [ 4, 0 ] ] ])
+  })
+
 })
