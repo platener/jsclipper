@@ -113,7 +113,21 @@ function Polygon(shape, holes) {
     throw new Error('Given holes should be an array of paths.')
   }
 
-  this._paths = [shape].concat(holes)
+  // force intented orientation on polygons
+  var _shape = shape.concat()
+  var _holes = holes.concat()
+  if (!Polygon.isCounterClockwise(shape)) {
+    _shape.reverse()
+  }
+
+  _holes = _holes.map(function(hole) {
+    if (Polygon.isCounterClockwise(hole)) {
+      return hole.concat().reverse()
+    }
+    return hole
+  })
+
+  this._paths = [_shape].concat(_holes)
 }
 
 Polygon.prototype.getPaths = function() {
@@ -141,6 +155,23 @@ Polygon.clip = function(clipPolygon, clipType) {
   return false
 }
 
+/**
+ * Outputs true if the polygon has a CCW winding
+ * @return {Boolean}
+ */
+Polygon.isCounterClockwise = function(path) {
+  // calculate signed polygon area
+  // if positive area --> counter clockwise winding
+  return ClipperLib.Clipper.Orientation(arrayToObjectNotation(path))
+};
+
+Polygon.contains = function(outer, inner) {
+  var _outer = arrayToObjectNotation(outer)
+  var _inner = arrayToObjectNotation(inner)
+  return _inner.reduce(function(acc, point) {
+    return acc && 0 !== ClipperLib.Clipper.PointInPolygon(point, _outer)
+  }, true)
+}
 // == EXPORTS ==
 module.exports = {
   arrayToObjectNotation: arrayToObjectNotation,
