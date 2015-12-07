@@ -41,7 +41,7 @@ var ClipType = {
 // == GENERAL PURPOSE CLIPPING ==
 
 function clip(subj, clips, clipType, scale, fillType) {
-  var scale = scale || Math.pow(10, 6)
+  var scale = scale || Math.pow(10, 3)
   var fillType = fillType || FillType.NON_ZERO
 
   if (!Array.isArray(subj)) {
@@ -116,7 +116,7 @@ function Polygon(shape, holes) {
   // force intented orientation on polygons
   var _shape = shape.concat()
   var _holes = holes.concat()
-  if (!Polygon.isCounterClockwise(shape)) {
+  if (!Polygon.isCounterClockwise(_shape)) {
     _shape.reverse()
   }
 
@@ -135,7 +135,7 @@ Polygon.prototype.getPaths = function() {
 }
 
 Polygon.prototype.getShape = function() {
-  return this._paths.slice(0,1)
+  return this._paths.slice(0,1)[0]
 }
 
 Polygon.prototype.getHoles = function() {
@@ -149,7 +149,7 @@ Polygon.prototype.clipMultiple = function(clipPolygons, clipType) {
     return polygon.getPaths()
   })
   var solution = clip(this.getPaths(), clipPaths, clipType)
-
+  console.log(solution)
   if (solution) {
     return Polygon.assignShapesAndHoles(solution)
   }
@@ -242,6 +242,13 @@ Polygon.contains = function(outer, inner) {
   return _inner.reduce(function(acc, point) {
     return acc && 0 !== ClipperLib.Clipper.PointInPolygon(point, _outer)
   }, true)
+}
+
+Polygon.containsPoint = function(polygon, point) {
+  return 0 !== ClipperLib.Clipper.PointInPolygon(
+    {X: point[0], Y: point[1]},
+    arrayToObjectNotation(polygon)
+  )
 }
 
 // == EXPORTS ==
