@@ -149,7 +149,6 @@ Polygon.prototype.clipMultiple = function(clipPolygons, clipType) {
     return polygon.getPaths()
   })
   var solution = clip(this.getPaths(), clipPaths, clipType)
-  console.log(solution)
   if (solution) {
     return Polygon.assignShapesAndHoles(solution)
   }
