@@ -125,4 +125,20 @@ describe('Clipping Tests', function() {
     expect(solution[1]._paths).to.deep.equal([ [ [ 4, 2 ], [ 3, 2 ], [ 3, 0 ], [ 4, 0 ] ] ])
   })
 
+  it('should diff multiple holes into subject', function() {
+    var subj = new Clipper.Polygon([[0,0], [4,0], [4,2], [0,2]])
+    var clip1 = new Clipper.Polygon([[2,0], [3,0], [3,2], [2,2]])
+    var clip2 = new Clipper.Polygon([[1,0], [1.5,0], [1.5,2], [1,2]])
+    var clips = [clip1, clip2]
+    var solution = subj.diffMultiple(clips)
+    expect(solution.length).to.equal(3)
+  })
+
+  it.only('should diff a single matching hole into subject', function() {
+    var subj = new Clipper.Polygon([[0,0], [4,0], [4,2], [0,2]])
+    var clip1 = new Clipper.Polygon([[2,0], [3,0], [3,2], [2,2]])
+    var solution = subj.diff(clip1)
+    expect(solution.length).to.equal(2)
+  })
+
 })
