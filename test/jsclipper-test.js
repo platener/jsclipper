@@ -35,6 +35,37 @@ describe('Clipping Tests', function() {
     expect(s).to.deep.equal([[[-2, -1], [2, -1], [2, 1], [-2, 1]]])
   })
 
+  it('should union aligned squares', function() {
+    // polies and scale 'em
+    var scale = Math.pow(10, 3)
+    var subj = Clipper.arrayToClipperPaths([[[0, 0], [5, 0], [5,5], [0,5]]])
+    var clip = Clipper.arrayToClipperPaths([[[5,0], [10,0], [10,5], [5, 5]]])
+
+    ClipperLib.JS.ScaleUpPaths(subj, scale)
+    ClipperLib.JS.ScaleUpPaths(clip, scale)
+
+    var clipper = new ClipperLib.Clipper()
+    var clipType = ClipperLib.ClipType.ctUnion
+    var fillType = ClipperLib.PolyFillType.pftNonZero
+
+    clipper.AddPaths(subj, ClipperLib.PolyType.ptSubject, true)
+    clipper.AddPaths(clip, ClipperLib.PolyType.ptClip, true)
+
+    var solution = []
+    var succeeded = clipper.Execute(clipType, solution, fillType, fillType)
+
+    expect(succeeded).to.be.true
+    expect(solution.length).to.equal(1)
+  })
+
+  it('should union aligned squares with adapter notation', function() {
+    var subj = new Clipper.Polygon([[0, 0], [5, 0], [5,5], [0,5]])
+    var clip = new Clipper.Polygon([[5,0], [10,0], [10,5], [5, 5]])
+
+    var solution = subj.union(clip)
+    expect(solution.length).to.equal(1)
+  })
+    
   it('should diff correctly', function() {
     // polies and scale 'em
     var scale = Math.pow(10, 6)
@@ -134,11 +165,25 @@ describe('Clipping Tests', function() {
     expect(solution.length).to.equal(3)
   })
 
-  it.only('should diff a single matching hole into subject', function() {
+  it('should diff a single matching hole into subject', function() {
     var subj = new Clipper.Polygon([[0,0], [4,0], [4,2], [0,2]])
     var clip1 = new Clipper.Polygon([[2,0], [3,0], [3,2], [2,2]])
     var solution = subj.diff(clip1)
     expect(solution.length).to.equal(2)
   })
 
+  it('should union finger joint forms - 1', function() {
+    var subj = new Clipper.Polygon([[-5,2], [-10,2], [-10,-3], [-5, -3]])
+    var clip = new Clipper.Polygon([[22,-3], [-22,-3], [-22,-47], [22,-47]])
+    var solution = subj.union(clip)
+    expect(solution.length).to.equal(1)
+  })
+
+  it('should union finger joint forms - 2', function() {
+    // WHAT THE HECK?! Why do we have to move the clip???
+    var clip = new Clipper.Polygon([[-5,2], [-10,2], [-10,-3.001], [-5, -3.001]])
+    var subj = new Clipper.Polygon([[22,-3], [-15,-3], [-15,2], [-22,2], [-22,-47], [22,-47]])
+    var solution = subj.union(clip)
+    expect(solution.length).to.equal(1)
+  })
 })
