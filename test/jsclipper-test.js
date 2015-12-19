@@ -186,4 +186,18 @@ describe('Clipping Tests', function() {
     var solution = subj.union(clip)
     expect(solution.length).to.equal(1)
   })
+
+    // https://github.com/platener/GreinerHormann/issues/11#issuecomment-166022296
+    // test case for "romka-chev"
+  it('should find inner hole', function() {
+    var subj = new Clipper.Polygon([[0,0], [0,3], [3,3], [3,0]])
+    var clip = new Clipper.Polygon([[1,1], [1,2], [2,2], [2,1]])
+    var solution = subj.diff(clip)
+
+    expect(solution.length).to.equal(1)
+    expect(solution[0].getShape()).to.deep.equal([[3,3], [0,3], [0,0], [3,0]])
+    expect(solution[0].getHoles().length).to.equal(1)
+    expect(solution[0].getHoles()[0]).to.deep.equal([[1,1], [1,2], [2,2], [2,1]])
+  })
+  
 })
