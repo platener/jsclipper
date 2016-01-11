@@ -103,6 +103,26 @@ function xor(subj, clips) {
 
 // == POLYGON METHODS ==
 
+/**
+ * Construct with an array of THREE.Vector2/3 instead of [x,y]
+ */
+Polygon.fromTHREE = function(shape, holes) {
+  var shapeArray = shape.map(function(vector) {
+    return [vector.x, vector.y]
+  })
+
+  var holesArray = undefined
+  if (holes) {
+    holesArray = holes.map(function(hole) {
+      return hole.map(function(vector) {
+        return [vector.x, vector.y]
+      })
+    })
+  }
+
+  return new Polygon(shapeArray, holesArray)
+}
+
 function Polygon(shape, holes) {
   if (!Array.isArray(shape)) {
     throw new Error('Given shape should be an array of points [x,y].')
@@ -238,6 +258,8 @@ Polygon.isCounterClockwise = function(path) {
 Polygon.contains = function(outer, inner) {
   var _outer = arrayToObjectNotation(outer)
   var _inner = arrayToObjectNotation(inner)
+  console.log("outer", _outer)
+  console.log(_inner)
   return _inner.reduce(function(acc, point) {
     return acc && 0 !== ClipperLib.Clipper.PointInPolygon(point, _outer)
   }, true)
