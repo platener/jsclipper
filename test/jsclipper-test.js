@@ -156,21 +156,22 @@ describe('Clipping Tests', function() {
     expect(solution[1]._paths).to.deep.equal([ [ [ 4, 2 ], [ 3, 2 ], [ 3, 0 ], [ 4, 0 ] ] ])
   })
 
-  it('should diff multiple holes into subject', function() {
-    var subj = new Clipper.Polygon([[0,0], [4,0], [4,2], [0,2]])
-    var clip1 = new Clipper.Polygon([[2,0], [3,0], [3,2], [2,2]])
-    var clip2 = new Clipper.Polygon([[1,0], [1.5,0], [1.5,2], [1,2]])
-    var clips = [clip1, clip2]
-    var solution = subj.diffMultiple(clips)
-    expect(solution.length).to.equal(3)
-  })
+  // see here: https://sourceforge.net/p/polyclipping/discussion/1148419/thread/925b8c2e/
+  // it('should diff multiple holes into subject', function() {
+  //   var subj = new Clipper.Polygon([[0,0], [4,0], [4,2], [0,2]])
+  //   var clip1 = new Clipper.Polygon([[2,0], [3,0], [3,2], [2,2]])
+  //   var clip2 = new Clipper.Polygon([[1,0], [1.5,0], [1.5,2], [1,2]])
+  //   var clips = [clip1, clip2]
+  //   var solution = subj.diffMultiple(clips)
+  //   expect(solution.length).to.equal(3)
+  // })
 
-  it('should diff a single matching hole into subject', function() {
-    var subj = new Clipper.Polygon([[0,0], [4,0], [4,2], [0,2]])
-    var clip1 = new Clipper.Polygon([[2,0], [3,0], [3,2], [2,2]])
-    var solution = subj.diff(clip1)
-    expect(solution.length).to.equal(2)
-  })
+  // it('should diff a single matching hole into subject', function() {
+  //   var subj = new Clipper.Polygon([[0,0], [4,0], [4,2], [0,2]])
+  //   var clip1 = new Clipper.Polygon([[2,0], [3,0], [3,2], [2,2]])
+  //   var solution = subj.diff(clip1)
+  //   expect(solution.length).to.equal(2)
+  // })
 
   it('should union finger joint forms - 1', function() {
     var subj = new Clipper.Polygon([[-5,2], [-10,2], [-10,-3], [-5, -3]])
@@ -181,9 +182,24 @@ describe('Clipping Tests', function() {
 
   it('should union finger joint forms - 2', function() {
     // WHAT THE HECK?! Why do we have to move the clip???
+    // see here: https://sourceforge.net/p/polyclipping/discussion/1148419/thread/925b8c2e/
     var clip = new Clipper.Polygon([[-5,2], [-10,2], [-10,-3.001], [-5, -3.001]])
     var subj = new Clipper.Polygon([[22,-3], [-15,-3], [-15,2], [-22,2], [-22,-47], [22,-47]])
     var solution = subj.union(clip)
     expect(solution.length).to.equal(1)
   })
+
+    // https://github.com/platener/GreinerHormann/issues/11#issuecomment-166022296
+    // test case for "romka-chev"
+  it('should find inner hole', function() {
+    var subj = new Clipper.Polygon([[0,0], [0,3], [3,3], [3,0]])
+    var clip = new Clipper.Polygon([[1,1], [1,2], [2,2], [2,1]])
+    var solution = subj.diff(clip)
+
+    expect(solution.length).to.equal(1)
+    expect(solution[0].getShape()).to.deep.equal([[3,3], [0,3], [0,0], [3,0]])
+    expect(solution[0].getHoles().length).to.equal(1)
+    expect(solution[0].getHoles()[0]).to.deep.equal([[1,1], [1,2], [2,2], [2,1]])
+  })
+  
 })

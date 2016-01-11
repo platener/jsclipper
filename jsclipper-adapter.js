@@ -1,5 +1,9 @@
 var ClipperLib = require ('./jsclipper')
 
+// == CONSTANTS
+
+var DEFAULT_SCALE = Math.pow(10, 3)
+
 // == CONVERSION HELPERS FROM Array TO ClipperLib
 
 function arrayToObjectNotation(arrayOfPoints) {
@@ -38,10 +42,16 @@ var ClipType = {
   XOR: ClipperLib.ClipType.ctXor
 }
 
+var JoinType = {
+  ROUND: ClipperLib.JoinType.jtRound,
+  MITER: ClipperLib.JoinType.jtMiter,
+  SQUARE: ClipperLib.JoinType.jtSquare
+}
+
 // == GENERAL PURPOSE CLIPPING ==
 
 function clip(subj, clips, clipType, scale, fillType) {
-  var scale = scale || Math.pow(10, 3)
+  var scale = scale || DEFAULT_SCALE
   var fillType = fillType || FillType.NON_ZERO
 
   if (!Array.isArray(subj)) {
@@ -121,6 +131,49 @@ Polygon.fromTHREE = function(shape, holes) {
   }
 
   return new Polygon(shapeArray, holesArray)
+}
+
+// == GENERAL PURPOSE OFFSETTING ==
+
+function offset(
+  subj,
+  offset,
+  scale,
+  fillType,
+  cleanDelta,
+  miterLimit,
+  arcTolerance,
+  joinType
+) {
+  var scale = scale || DEFAULT_SCALE
+  var fillType = fillType || FillType.NON_ZERO
+  var cleanDelta = cleanDelta || 1 / scale
+  var miterLimit = miterLimit || 2
+  var arcTolerance = arcTolerance || 0.25
+  var joinType = joinType || JoinType.SQUARE
+
+  if (!Array.isArray(subj)) {
+    throw new Error('Provide subject polygon as an array of paths.')
+  }
+
+  var subjPaths = arrayToClipperPaths(subj)
+  ClipperLib.JS.ScaleUpPaths(subjPaths, scale)
+
+  var simplifiedPaths = ClipperLib.Clipper.SimplifyPolygons(subjPaths, fillType)
+  var cleanedPaths = ClipperLib.JS.Clean(simplifiedPaths, cleanDelta)
+  var clipperOffset = new ClipperLib.ClipperOffset()
+
+  clipperOffset.AddPaths(
+    cleanedPaths,
+    joinType,
+    ClipperLib.EndType.etClosedPolygon
+  )
+
+  var solution = []
+  clipperOffset.Execute(solution, offset * scale)
+
+  ClipperLib.JS.ScaleDownPaths(solution, scale)
+  return clipperPathsToArray(solution)
 }
 
 function Polygon(shape, holes) {
@@ -211,6 +264,13 @@ Polygon.prototype.xor = function (clipPolygons) {
   return this.clipMultiple([clipPolygons], ClipType.XOR)
 }
 
+/** use offset method on subject polygon **/
+
+Polygon.prototype.offset = function (delta) {
+  var solution = offset(this.getPaths(), delta)
+  return Polygon.assignShapesAndHoles(solution)[0]
+}
+
 Polygon.assignShapesAndHoles = function(paths) {
   function separateHolesFromShapes(paths) {
     var holes = []
@@ -258,8 +318,6 @@ Polygon.isCounterClockwise = function(path) {
 Polygon.contains = function(outer, inner) {
   var _outer = arrayToObjectNotation(outer)
   var _inner = arrayToObjectNotation(inner)
-  console.log("outer", _outer)
-  console.log(_inner)
   return _inner.reduce(function(acc, point) {
     return acc && 0 !== ClipperLib.Clipper.PointInPolygon(point, _outer)
   }, true)
@@ -274,6 +332,8 @@ Polygon.containsPoint = function(polygon, point) {
 
 // == EXPORTS ==
 module.exports = {
+  DEFAULT_SCALE: DEFAULT_SCALE,
+
   arrayToObjectNotation: arrayToObjectNotation,
   objectToArrayNotation: objectToArrayNotation,
   arrayToClipperPaths: arrayToClipperPaths,
@@ -281,6 +341,7 @@ module.exports = {
 
   FillType: FillType,
   ClipType: ClipType,
+  JoinType: JoinType,
 
   clip: clip,
   intersect: intersect,
