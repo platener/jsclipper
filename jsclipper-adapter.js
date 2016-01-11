@@ -116,7 +116,7 @@ function xor(subj, clips) {
 /**
  * Construct with an array of THREE.Vector2/3 instead of [x,y]
  */
-Polygon.fromTHREE = function(shape, holes) {
+Polygon.fromVector = function(shape, holes) {
   var shapeArray = shape.map(function(vector) {
     return [vector.x, vector.y]
   })
