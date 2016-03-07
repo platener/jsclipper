@@ -76,9 +76,9 @@ function clip(subj, clips, clipType, scale, fillType) {
   var clipper = new ClipperLib.Clipper()
   ClipperLib.JS.ScaleUpPaths(subjPaths, scale)
   clipper.AddPaths(subjPaths, ClipperLib.PolyType.ptSubject, true)
-  clipsPaths.forEach(function(clipPaths) {
-    ClipperLib.JS.ScaleUpPaths(clipPaths, scale)
-    clipper.AddPaths(clipPaths, ClipperLib.PolyType.ptClip, true)
+  clipsPaths.forEach(function(clipPath) {
+    ClipperLib.JS.ScaleUpPaths(clipPath, scale)
+    clipper.AddPaths(clipPath, ClipperLib.PolyType.ptClip, true)
   })
 
   var solution = []
