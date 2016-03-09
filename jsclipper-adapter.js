@@ -50,9 +50,21 @@ var JoinType = {
 
 // == GENERAL PURPOSE CLIPPING ==
 
+function isPathWithClosedProperty(subj) {
+  return !!(typeof subj === 'object'
+            && subj.paths && Array.isArray(subj.paths)
+            && typeof subj.isClosed === 'boolean')
+}
+
 function clip(subj, clips, clipType, scale, fillType) {
   var scale = scale || DEFAULT_SCALE
   var fillType = fillType || FillType.NON_ZERO
+
+  var subjClosed = true
+  if (isPathWithClosedProperty(subj)) {
+    subjClosed = subj.isClosed
+    subj = subj.paths
+  }
 
   if (!Array.isArray(subj)) {
     throw new Error('Provide subject polygon as an array of paths.')
@@ -71,19 +83,33 @@ function clip(subj, clips, clipType, scale, fillType) {
   }
 
   var subjPaths = arrayToClipperPaths(subj)
-  var clipsPaths = clips.map(arrayToClipperPaths)
+  var clipsPaths = clips
+      .map(function(paths) {
+        if (isPathWithClosedProperty(paths)) {
+          return paths
+        }
+        return {
+          isClosed: true,
+          paths: paths
+        }
+      })
+      .map(function(p) {
+        p.paths = arrayToClipperPaths(p.paths)
+        return p
+      })
 
   var clipper = new ClipperLib.Clipper()
+  var needsPolyTree = !subjClosed
   ClipperLib.JS.ScaleUpPaths(subjPaths, scale)
-  clipper.AddPaths(subjPaths, ClipperLib.PolyType.ptSubject, true)
-  clipsPaths.forEach(function(clipPath) {
-    ClipperLib.JS.ScaleUpPaths(clipPath, scale)
-    clipper.AddPaths(clipPath, ClipperLib.PolyType.ptClip, true)
+  clipper.AddPaths(subjPaths, ClipperLib.PolyType.ptSubject, subjClosed)
+  clipsPaths.forEach(function(clipPaths) {
+    needsPolyTree = needsPolyTree || !clipPaths.isClosed
+    ClipperLib.JS.ScaleUpPaths(clipPaths.paths, scale)
+    clipper.AddPaths(clipPaths.paths, ClipperLib.PolyType.ptClip, clipPaths.isClosed)
   })
 
-  var solution = []
+  var solution = needsPolyTree ? new ClipperLib.PolyTree() : []
   var succeeded = clipper.Execute(clipType, solution, fillType, fillType)
-
   if (succeeded) {
     ClipperLib.JS.ScaleDownPaths(solution, scale)
     return clipperPathsToArray(solution)
@@ -176,7 +202,9 @@ function offset(
   return clipperPathsToArray(solution)
 }
 
-function Polygon(shape, holes) {
+function Polygon(shape, holes, isClosed) {
+  this.isClosed = isClosed || true
+
   if (!Array.isArray(shape)) {
     throw new Error('Given shape should be an array of points [x,y].')
   }
@@ -219,9 +247,14 @@ Polygon.prototype.getHoles = function() {
 
 Polygon.prototype.clipMultiple = function(clipPolygons, clipType) {
   var clipPaths = clipPolygons.map(function(polygon) {
-    return polygon.getPaths()
+    return { isClosed: polygon.isClosed, paths: polygon.getPaths() }
   })
-  var solution = clip(this.getPaths(), clipPaths, clipType)
+  var solution = clip(
+    { isClosed: this.isClosed, paths: this.getPaths() },
+    clipPaths,
+    clipType
+  )
+
   if (solution) {
     return Polygon.assignShapesAndHoles(solution)
   }
@@ -342,6 +375,8 @@ module.exports = {
   FillType: FillType,
   ClipType: ClipType,
   JoinType: JoinType,
+
+  isPathWithClosedProperty: isPathWithClosedProperty,
 
   clip: clip,
   intersect: intersect,

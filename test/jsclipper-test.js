@@ -5,6 +5,24 @@ var Clipper = require('../jsclipper-adapter')
 
 // == Here we simply test some edge cases that failed in our GreinerHormann implementation ==
 describe('Clipping Tests', function() {
+  it('should detect a path with closed-property', function() {
+    var p = [1, 2, 3]
+
+    var pathWithFalse = {
+      paths: p,
+      isClosed: false
+    }
+
+    var pathWithTrue = {
+      paths: p,
+      isClosed: true
+    }
+
+    expect(Clipper.isPathWithClosedProperty(pathWithFalse)).to.be.true
+    expect(Clipper.isPathWithClosedProperty(pathWithTrue)).to.be.true
+    expect(Clipper.isPathWithClosedProperty(p)).to.be.false
+  })
+
   it('should union correctly', function() {
     // polies and scale 'em
     var scale = Math.pow(10, 6)
@@ -65,7 +83,7 @@ describe('Clipping Tests', function() {
     var solution = subj.union(clip)
     expect(solution.length).to.equal(1)
   })
-    
+
   it('should diff correctly', function() {
     // polies and scale 'em
     var scale = Math.pow(10, 6)
@@ -92,6 +110,23 @@ describe('Clipping Tests', function() {
     // convert back to original notation
     var s = Clipper.clipperPathsToArray(solution)
     expect(s).to.be.empty
+  })
+
+  it('should not intersect open and closed polygon', function() {
+    var p1 = { isClosed: false, paths: [[[0,1], [1,1], [1,0], [0,0]]] }
+    var p2 = [[[0.25, -0.5], [0.75, -0.5], [0.75, 0.5], [0.25, 0.5]]]
+
+    var solution = Clipper.clip(p1, [p2], Clipper.ClipType.INTERSECTION)
+    console.log(solution)
+  })
+
+  it('should intersect closed polygons', function() {
+    var p1 = new Clipper.Polygon([[0,0], [0,1], [1,1], [1,0]])
+    var p2 = new Clipper.Polygon([[0.25, -0.5], [0.75, -0.5], [0.75, 0.5], [0.25, 0.5]])
+    expect(p1.intersect(p2).length).to.equal(1)
+  })
+
+  it('should not intersect open and closed polygon', function() {
   })
 
   it('should union correctly using new interface', function() {
@@ -201,5 +236,5 @@ describe('Clipping Tests', function() {
     expect(solution[0].getHoles().length).to.equal(1)
     expect(solution[0].getHoles()[0]).to.deep.equal([[1,1], [1,2], [2,2], [2,1]])
   })
-  
+
 })
