@@ -55,7 +55,7 @@ var Closed = {
 
 // == GENERAL PURPOSE CLIPPING ==
 
-function clip(subj, clips, clipType, scale, fillType, subjPathClosed, clipPathsClosed) {
+function clip(subj, clips, clipType, scale, fillType, subjPathClosed) {
   var scale = scale || DEFAULT_SCALE
   var fillType = fillType || FillType.NON_ZERO
   var subjPathClosed = subjPathClosed || Closed.TRUE
@@ -72,12 +72,6 @@ function clip(subj, clips, clipType, scale, fillType, subjPathClosed, clipPathsC
     throw new Error('Provide at least one clip.')
   }
 
-  var clipPathsClosed = clipPathsClosed || function(){
-    var trueArray = []
-    for (var i = 0; i<clips.length; i++){trueArray.push(Closed.TRUE)}
-    return trueArray
-  }
-
   if ('number' != typeof clipType || !(0 <= clipType && clipType < 4)) {
     throw new Error('Provide a valid clip type!')
   }
@@ -90,7 +84,7 @@ function clip(subj, clips, clipType, scale, fillType, subjPathClosed, clipPathsC
   clipper.AddPaths(subjPaths, ClipperLib.PolyType.ptSubject, subjPathClosed)
   clipsPaths.forEach(function(clipPaths, index) {
     ClipperLib.JS.ScaleUpPaths(clipPaths, scale)
-    clipper.AddPaths(clipPaths, ClipperLib.PolyType.ptClip, clipPathsClosed[index])
+    clipper.AddPaths(clipPaths, ClipperLib.PolyType.ptClip, true)
   })
 
   var solution = []
@@ -103,6 +97,12 @@ function clip(subj, clips, clipType, scale, fillType, subjPathClosed, clipPathsC
 
   // return false when the clipping failed
   return false
+}
+
+function trueArray(length) {
+  var array = []
+  for (var i = 0; i<length; i++) array.push(Closed.TRUE)
+  return array
 }
 
 // == CLIPPING METHODS ==
@@ -241,10 +241,7 @@ Polygon.prototype.clipMultiple = function(clipPolygons, clipType) {
   var clipPaths = clipPolygons.map(function(polygon) {
     return polygon.getPaths()
   })
-  var clipPathsClosed = clipPolygons.map(function(polygon) {
-    return polygon.isClosed()
-  })
-  var solution = clip(this.getPaths(), clipPaths, clipType, DEFAULT_SCALE, FillType.NON_ZERO, subjPathClosed, clipPathsClosed)
+  var solution = clip(this.getPaths(), clipPaths, clipType, null, null, subjPathClosed)
   if (solution) {
     return Polygon.assignShapesAndHoles(solution)
   }

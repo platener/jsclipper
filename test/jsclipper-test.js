@@ -65,7 +65,7 @@ describe('Clipping Tests', function() {
     var solution = subj.union(clip)
     expect(solution.length).to.equal(1)
   })
-    
+
   it('should diff correctly', function() {
     // polies and scale 'em
     var scale = Math.pow(10, 6)
@@ -201,5 +201,14 @@ describe('Clipping Tests', function() {
     expect(solution[0].getHoles().length).to.equal(1)
     expect(solution[0].getHoles()[0]).to.deep.equal([[1,1], [1,2], [2,2], [2,1]])
   })
-  
+
+  it('should intersect a open path correctly', function() {
+    var subj = new Clipper.Polygon([[1,0], [1,3]], [], Clipper.Closed.FALSE)
+    var clip = new Clipper.Polygon([[2,1], [2,2], [0,2], [0,1]])
+    var solution = subj.diff(clip)
+
+    expect(solution.length).to.equal(1)
+    expect(solution[0].getShape()).to.deep.equal([[1,1], [1,2]])
+  })
+
 })
