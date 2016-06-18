@@ -271,6 +271,14 @@ Polygon.prototype.offset = function (delta) {
   return Polygon.assignShapesAndHoles(solution)[0]
 }
 
+Polygon.prototype.area = function(scale) {
+  scale = scale || DEFAULT_SCALE
+
+  var path = arrayToObjectNotation(this.getShape())
+  ClipperLib.JS.ScaleUpPath(path, scale)
+  return ClipperLib.Clipper.Area(path) / (scale * scale)
+}
+
 Polygon.assignShapesAndHoles = function(paths) {
   function separateHolesFromShapes(paths) {
     var holes = []
@@ -310,8 +318,6 @@ Polygon.assignShapesAndHoles = function(paths) {
  * @return {Boolean}
  */
 Polygon.isCounterClockwise = function(path) {
-  // calculate signed polygon area
-  // if positive area --> counter clockwise winding
   return ClipperLib.Clipper.Orientation(arrayToObjectNotation(path))
 };
 
