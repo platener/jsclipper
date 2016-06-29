@@ -354,6 +354,7 @@ module.exports = {
   union: union,
   diff: diff,
   xor: xor,
+  offset: offset,
 
   Polygon: Polygon,
 
