@@ -293,6 +293,18 @@ Polygon.prototype.area = function(scale) {
   return ClipperLib.Clipper.Area(path) / (scale * scale)
 }
 
+Polygon.prototype.containsPoint = function(point, scale) {
+  scale = scale || DEFAULT_SCALE
+
+  var path = arrayToObjectNotation(this.getShape())
+  ClipperLib.JS.ScaleUpPath(path, scale)
+
+  return 0 !== ClipperLib.Clipper.PointInPolygon(
+    { X: point[0] * scale, Y: point[1] * scale },
+    path
+  )
+}
+
 Polygon.assignShapesAndHoles = function(paths) {
   function separateHolesFromShapes(paths) {
     var holes = []
