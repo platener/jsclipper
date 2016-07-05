@@ -150,7 +150,7 @@ function offset(
   var cleanDelta = cleanDelta || 1 / scale
   var miterLimit = miterLimit || 2
   var arcTolerance = arcTolerance || 0.25
-  var joinType = joinType || JoinType.SQUARE
+  var joinType = joinType || JoinType.MITER
 
   if (!Array.isArray(subj)) {
     throw new Error('Provide subject polygon as an array of paths.')
@@ -201,6 +201,20 @@ function Polygon(shape, holes) {
   })
 
   this._paths = [_shape].concat(_holes)
+}
+
+// produce a clone of the polygon
+Polygon.prototype.clone = function() {
+  clonedShape = this.getShape().map(function(vertex) {
+    return vertex.concat()
+  })
+  clonedHoles = this.getHoles().map((function(holePath) {
+    return holePath.map(function(vertex) {
+      return vertex.concat()
+    })
+  }))
+
+  return new Polygon(clonedShape, clonedHoles)
 }
 
 Polygon.prototype.getPaths = function() {
