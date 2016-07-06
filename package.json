@@ -1,6 +1,6 @@
 {
   "name": "jsclipper",
-  "version": "6.1.32",
+  "version": "6.1.33",
   "description": "JSClipper port from C#-Clipper library available on npm with simplified clipping interface",
   "main": "jsclipper-adapter.js",
   "scripts": {
