@@ -2,7 +2,7 @@ var ClipperLib = require ('./jsclipper')
 
 // == CONSTANTS
 
-var DEFAULT_SCALE = Math.pow(10, 3)
+var DEFAULT_SCALE = Math.pow(10, 5)
 
 // == CONVERSION HELPERS FROM Array TO ClipperLib
 
@@ -280,8 +280,8 @@ Polygon.prototype.xor = function (clipPolygons) {
 
 /** use offset method on subject polygon **/
 
-Polygon.prototype.offset = function (delta) {
-  var solution = offset(this.getPaths(), delta)
+Polygon.prototype.offset = function (delta, scale) {
+  var solution = offset(this.getPaths(), delta, scale)
   return Polygon.assignShapesAndHoles(solution)[0]
 }
 
