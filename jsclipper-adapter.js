@@ -296,13 +296,13 @@ Polygon.prototype.area = function(scale) {
 Polygon.prototype.containsPoint = function(point, scale) {
   scale = scale || DEFAULT_SCALE
 
-  var path = arrayToObjectNotation(this.getShape())
-  ClipperLib.JS.ScaleUpPath(path, scale)
+  var shape = this.getShape()
+  var holes = this.getHoles()
+  var inHoles = holes.some(function(hole) {
+    return Polygon.containsPoint(hole, point, scale)
+  })
 
-  return 0 !== ClipperLib.Clipper.PointInPolygon(
-    { X: point[0] * scale, Y: point[1] * scale },
-    path
-  )
+  return Polygon.containsPoint(shape, point, scale) && !inHoles
 }
 
 Polygon.assignShapesAndHoles = function(paths) {
@@ -355,10 +355,13 @@ Polygon.contains = function(outer, inner) {
   }, true)
 }
 
-Polygon.containsPoint = function(polygon, point) {
+Polygon.containsPoint = function(path, point, scale) {
+  path = arrayToObjectNotation(path)
+  ClipperLib.JS.ScaleUpPath(path, scale)
+
   return 0 !== ClipperLib.Clipper.PointInPolygon(
-    {X: point[0], Y: point[1]},
-    arrayToObjectNotation(polygon)
+    { X: point[0] * scale, Y: point[1] * scale },
+    path
   )
 }
 
